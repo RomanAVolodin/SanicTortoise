@@ -1,0 +1,40 @@
+version: '3.8'
+
+x-app: &app
+  env_file:
+    - ./.env
+  restart: always
+
+x-default-logging: &default-logging
+  options:
+    max-size: '10m'
+    max-file: '3'
+  driver: json-file
+
+services:
+  web:
+    build: ./
+    command: sanic main:create_app --host=0.0.0.0 --port=1234 --debug --reload
+    <<: *app
+    logging: *default-logging
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - 1234:1234
+    depends_on:
+      - web-db
+
+  web-db:
+    image: postgres:15
+    <<: *app
+    logging: *default-logging
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    environment:
+      TZ: "Europe/Moscow"
+      PGTZ: "Europe/Moscow"
+
+volumes:
+  db_data:
